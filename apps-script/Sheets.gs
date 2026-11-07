@@ -226,33 +226,30 @@ function renderFunnel(records, settings) {
   sh.getRange(5, 1, 1, 6).setValues([kpiValues]).setFontSize(18).setFontWeight('bold')
     .setNumberFormats([kpiFormats]).setHorizontalAlignment('left');
 
-  // Таблица воронки.
+  // Таблица воронки с полосками-графиками прямо в ячейках (SPARKLINE рисуется надёжнее встроенного графика).
   const top = 7;
   const rows = funnelRows(totals);
   sh.getRange(top, 1, 1, 4).setValues([['Этап', 'Количество', 'Из предыдущего', 'От показов']]);
-  styleHeader(sh.getRange(top, 1, 1, 4));
+  sh.getRange(top, 5, 1, 5).merge().setValue('Воронка');
+  styleHeader(sh.getRange(top, 1, 1, 9));
   sh.getRange(top + 1, 1, rows.length, 4).setValues(rows);
   sh.getRange(top + 1, 2, rows.length, 1).setNumberFormat(FMT.int);
   sh.getRange(top + 1, 3, rows.length, 2).setNumberFormat(FMT.percent);
-  bandRows(sh.getRange(top + 1, 1, rows.length, 4));
 
-  sh.insertChart(sh.newChart()
-    .setChartType(Charts.ChartType.BAR)
-    .addRange(sh.getRange(top + 1, 1, rows.length, 2))
-    .setNumHeaders(0)
-    .setPosition(top, 6, 10, 0)
-    .setOption('title', 'Воронка (логарифмическая шкала)')
-    .setOption('legend', { position: 'none' })
-    .setOption('hAxis', { logScale: true, format: 'short', viewWindow: { min: 1000 } })
-    .setOption('vAxis', { textStyle: { fontSize: 11 } })
-    .setOption('chartArea', { left: 160, top: 40, width: '62%', height: '72%' })
-    .setOption('colors', [COLORS.accent])
-    .setOption('width', 560)
-    .setOption('height', 300)
-    .build());
+  // Полоски считает скрипт и пишет готовым текстом: формулы с массивами зависят от языка таблицы.
+  // Шкала логарифмическая от 1 000 до числа показов, иначе этапы после показов были бы невидимы.
+  const first = top + 1;
+  const bars = funnelBars(rows.map(function (r) { return r[1]; }), 40);
+  for (let i = 0; i < rows.length; i++) {
+    sh.getRange(first + i, 5, 1, 5).merge().setValue(bars[i])
+      .setFontColor(COLORS.accent).setFontFamily('Arial').setHorizontalAlignment('left');
+  }
+  bandRows(sh.getRange(first, 1, rows.length, 9));
+  sh.getRange(first + rows.length, 5).setValue('Шкала полосок логарифмическая — чтобы были видны все этапы')
+    .setFontColor(COLORS.muted).setFontSize(8).setFontStyle('italic');
 
   // Воронка по категориям.
-  const catTop = 24;
+  const catTop = top + rows.length + 4;
   const catHeader = ['Категория', 'Показы', 'Карточка', 'Корзина', 'Заказы', 'Выкупы', 'Выручка', 'CTR', 'В заказ', 'Выкуп'];
   const cats = sortRows(aggregateBy(records, 'category'), 'revenue', true);
   sh.getRange(catTop - 1, 1).setValue('По категориям').setFontWeight('bold');

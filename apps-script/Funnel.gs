@@ -118,6 +118,20 @@ function sortRows(rows, field, descending) {
   });
 }
 
+/**
+ * Текстовые полоски для воронки в ячейках: длина по логарифмической шкале от 1 000
+ * до максимума. Ненулевой этап получает хотя бы один символ.
+ */
+function funnelBars(values, width) {
+  const floor = 3; // log10(1 000)
+  const top = Math.log10(Math.max.apply(null, values.concat([1000])));
+  return values.map(function (v) {
+    if (!(v > 0)) return '';
+    const share = top > floor ? (Math.log10(v) - floor) / (top - floor) : 1;
+    return '█'.repeat(Math.max(1, Math.round(Math.min(1, Math.max(0, share)) * width)));
+  });
+}
+
 /** Поле сортировки по подписи из выпадающего списка; по умолчанию — выручка. */
 function sortFieldByTitle(title) {
   const option = SORT_OPTIONS.filter(function (o) { return o.title === title; })[0];
@@ -128,6 +142,6 @@ function sortFieldByTitle(title) {
 if (typeof module !== 'undefined') {
   module.exports = {
     STAGES, safeDiv, filterRecords, sumTotals, funnelRows, kpis,
-    withRates, aggregateBy, dailyRows, sortRows, sortFieldByTitle,
+    withRates, aggregateBy, dailyRows, sortRows, sortFieldByTitle, funnelBars,
   };
 }

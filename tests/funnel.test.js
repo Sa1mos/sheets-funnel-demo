@@ -141,3 +141,14 @@ test('распродажа 11–13 октября видна в динамике
   const before = (revenue['2026-10-04'] + revenue['2026-10-05'] + revenue['2026-10-06']) / 3;
   assert.ok(promo > before * 1.5, `promo ${promo} vs before ${before}`);
 });
+
+test('полоски воронки: логарифмическая длина, все этапы видны', () => {
+  const s = loadScripts(fileApi([]));
+  const bars = s.funnelBars([10851726, 556928, 60305, 22770, 19822, 0], 40);
+  assert.equal(bars[0].length, 40);
+  for (let i = 1; i < 5; i++) {
+    assert.ok(bars[i].length >= 1 && bars[i].length <= bars[i - 1].length, `этап ${i}: ${bars[i].length}`);
+  }
+  assert.equal(bars[5], '');
+  assert.ok(/^█+$/.test(bars[4]));
+});
