@@ -91,7 +91,7 @@ function setupDataSheet(sh) {
 
 function setupReportControls(sh) {
   sh.getRange('A1').setValue('Отчёт по товарам').setFontSize(16).setFontWeight('bold');
-  sh.getRange('A2').setValue('Сортировать по:').setFontWeight('bold').setHorizontalAlignment('right');
+  sh.getRange('A2').setValue('Сортировка:').setFontWeight('bold').setHorizontalAlignment('right');
   sh.getRange('C2').setValue('Порядок:').setFontWeight('bold').setHorizontalAlignment('right');
 
   const sortCell = sh.getRange(REPORT_CONTROLS.sortBy);
@@ -238,11 +238,14 @@ function renderFunnel(records, settings) {
 
   sh.insertChart(sh.newChart()
     .setChartType(Charts.ChartType.BAR)
-    .addRange(sh.getRange(top, 1, rows.length + 1, 2))
+    .addRange(sh.getRange(top + 1, 1, rows.length, 2))
+    .setNumHeaders(0)
     .setPosition(top, 6, 10, 0)
     .setOption('title', 'Воронка (логарифмическая шкала)')
     .setOption('legend', { position: 'none' })
-    .setOption('hAxis', { logScale: true, format: 'short' })
+    .setOption('hAxis', { logScale: true, format: 'short', viewWindow: { min: 1000 } })
+    .setOption('vAxis', { textStyle: { fontSize: 11 } })
+    .setOption('chartArea', { left: 160, top: 40, width: '62%', height: '72%' })
     .setOption('colors', [COLORS.accent])
     .setOption('width', 560)
     .setOption('height', 300)
@@ -272,11 +275,13 @@ function renderFunnel(records, settings) {
   sh.getRange(2, dCol, daily.length, 3).setValues(daily).setFontColor(COLORS.muted);
   sh.getRange(2, dCol, daily.length, 1).setNumberFormat(FMT.date);
   sh.getRange(2, dCol + 1, daily.length, 2).setNumberFormat(FMT.int);
+  sh.hideColumns(dCol, 3);
 
   sh.insertChart(sh.newChart()
     .setChartType(Charts.ChartType.LINE)
     .addRange(sh.getRange(1, dCol, daily.length + 1, 1))
     .addRange(sh.getRange(1, dCol + 2, daily.length + 1, 1))
+    .setHiddenDimensionStrategy(Charts.ChartHiddenDimensionStrategy.SHOW_BOTH)
     .setPosition(catTop + catRows.length + 3, 1, 0, 0)
     .setOption('title', 'Выручка по дням, ₽')
     .setOption('legend', { position: 'none' })
@@ -346,10 +351,12 @@ function renderReport(records, settings) {
   };
   sh.setConditionalFormatRules([scale(12), scale(13)]);
 
-  sh.setColumnWidth(1, 90);
+  // Колонки A и D шире остальных: в них же стоят подпись и список сортировки.
+  sh.setColumnWidth(1, 110);
   sh.setColumnWidth(2, 250);
   sh.setColumnWidth(3, 110);
   for (let c = 4; c <= width; c++) sh.setColumnWidth(c, 95);
+  sh.setColumnWidth(4, 130);
 }
 
 // ---------- Журнал ----------
